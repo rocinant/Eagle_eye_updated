@@ -1,0 +1,1 @@
+Android project for image processing and sending activating command to arduino

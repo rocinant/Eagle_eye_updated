@@ -1,0 +1,255 @@
+package com.kevin.huang.mobilemocap;
+
+public class PIDcontroller {
+	
+	//----------------------------------------------------------------------------
+	// File: PIDController.java
+	//
+	// Description: This PIDCOntroller class is a port from the FIRST PID Controller
+//	              task. This port removes the additional thread overhead but it
+//	              must run within a periodic task (not a continuous task) to work
+//	              correctly.
+	// ----------------------------------------------------------------------------
+
+	    private double m_P;                 // factor for "proportional" control
+	    private double m_I;                 // factor for "integral" control
+	    private double m_D;                 // factor for "derivative" control
+	    private double m_maximumOutput = 255;       // |maximum output|
+	    private double m_minimumOutput = 0;      // |minimum output|
+	    private boolean m_enabled = false;                  //is the pid controller enabled
+	    private double m_prevError = 0.0;   // the prior sensor error
+	    private double m_totalError = 0.0; //the sum of the errors for use in the integral calc
+	    private double m_tolerance = 50;  //the px error that is considered on target
+	    private double m_error = 0.0;
+	    
+	    public double m_result = 0.0;
+	    
+	    private double preDeltaTime=80.0;
+	    
+	    public double pidTerm=0;
+
+	    /**
+	     * Allocate a PID object with the given constants for P, I, D
+	     * @param Kp the proportional coefficient
+	     * @param Ki the integral coefficient
+	     * @param Kd the derivative coefficient
+	     */
+	    public PIDcontroller(double Kp, double Ki, double Kd) {
+
+	        m_P = Kp;
+	        m_I = Ki;
+	        m_D = Kd;
+
+	    }
+	    
+	    int updatePid(int currentCommand, double targetValue, double currentValue, double integral, int deltaTime)   {
+	    	
+	    	if (m_enabled) {                           
+	    	m_error = targetValue - currentValue;
+	    	
+	    	/*m_tolerance = 0.38;
+	    	
+	    	if (onTarget()) {*/
+	    	
+	    	/* Integrate the errors as long as the upcoming integrator does not exceed the minimum and maximum output thresholds */
+	        m_totalError += integral;
+
+	        // Perform the primary PID calculation
+	         m_result = (m_P * m_error + m_I * m_totalError + m_D * ( 2 * (m_error- m_prevError) / (deltaTime + preDeltaTime) ));
+	         pidTerm = m_result;
+	
+	         // Set the current error to the previous error for the next cycle
+	         
+	         m_prevError = m_error;
+	         this.preDeltaTime = deltaTime;
+	         
+	         m_result = Math.round(m_result) + currentCommand;
+
+	         // Make sure the final result is within bounds
+	         if (m_result > m_maximumOutput) {
+	             m_result = m_maximumOutput;
+	         } else if (m_result < m_minimumOutput) {
+	             m_result = m_minimumOutput;
+	         }
+	         
+	    	/*}
+	    	
+	    	else m_result = currentCommand;*/
+	    	
+	    	}
+	         
+	         return (int) m_result;
+	         
+	   }
+	    
+	    int updatePid(int currentCommand, int targetValue, float currentValue)   {
+	    	
+	    	if (m_enabled) {                           
+	    	m_error = targetValue - currentValue;
+	    	
+	    	if (onTarget()) {
+	    	
+	    	/* Integrate the errors as long as the upcoming integrator does not exceed the minimum and maximum output thresholds */
+	        m_totalError += m_error;
+
+	        // Perform the primary PID calculation
+	         m_result = (m_P * m_error + m_I * m_totalError + m_D * (m_error - m_prevError));
+	
+	         // Set the current error to the previous error for the next cycle
+	         
+	         m_prevError = m_error;
+	         
+	         m_result += currentCommand;
+
+	         // Make sure the final result is within bounds
+	         if (m_result > m_maximumOutput) {
+	             m_result = m_maximumOutput;
+	         } else if (m_result < m_minimumOutput) {
+	             m_result = m_minimumOutput;
+	         }
+	    	}
+	    	
+	    	else m_result = currentCommand;
+	    	
+	    	}
+	         
+	         return (int)m_result;
+	         
+	   }
+	    
+	    int updatePid(int currentCommand, float targetValue, int currentValue)   {
+	    	
+	    	if (m_enabled) {                           
+	    	m_error = targetValue - currentValue;
+	    	
+	    	if (onTarget()) {
+	    	
+	    	/* Integrate the errors as long as the upcoming integrator does not exceed the minimum and maximum output thresholds */
+	        m_totalError += m_error;
+
+	        // Perform the primary PID calculation
+	         m_result = (m_P * m_error + m_I * m_totalError + m_D * (m_error - m_prevError));
+	
+	         // Set the current error to the previous error for the next cycle
+	         
+	         m_prevError = m_error;
+	         
+	         m_result += currentCommand;
+
+	         // Make sure the final result is within bounds
+	         if (m_result > m_maximumOutput) {
+	             m_result = m_maximumOutput;
+	         } else if (m_result < m_minimumOutput) {
+	             m_result = m_minimumOutput;
+	         }
+	    	}
+	    	
+	    	else m_result = currentCommand;
+	    	
+	    	}
+	         
+	         return (int)m_result;
+	         
+	   }
+
+	    /**
+	     * Set the PID Controller gain parameters.
+	     * Set the proportional, integral, and differential coefficients.
+	     * @param p Proportional coefficient
+	     * @param i Integral coefficient
+	     * @param d Differential coefficient
+	     */
+	    public void setPID(double p, double i, double d) {
+	        m_P = p;
+	        m_I = i;
+	        m_D = d;
+	    }
+
+	    /**
+	     * Get the Proportional coefficient
+	     * @return proportional coefficient
+	     */
+	    public double getP() {
+	        return m_P;
+	    }
+
+	    /**
+	     * Get the Integral coefficient
+	     * @return integral coefficient
+	     */
+	    public double getI() {
+	        return m_I;
+	    }
+
+	    /**
+	     * Get the Differential coefficient
+	     * @return differential coefficient
+	     */
+	    public double getD() {
+	        return m_D;
+	    }
+
+	    /**
+	     * Sets the minimum and maximum values to write.
+	     *
+	     * @param minimumOutput the minimum value to write to the output
+	     * @param maximumOutput the maximum value to write to the output
+	     */
+	    public void setOutputRange(double minimumOutput, double maximumOutput) {
+	        m_minimumOutput = minimumOutput;
+	        m_maximumOutput = maximumOutput;
+	    }
+
+	    /**
+	     * Retruns the current difference of the input from the setpoint
+	     * @return the current error
+	     */
+	    public synchronized double getError() {
+	        return m_error;
+	    }
+
+	    /**
+	     * Set the percentage error which is considered tolerable for use with
+	     * OnTarget. (Input of 15.0 = 15 percent)
+	     * @param percent error which is tolerable
+	     */
+	    public void setTolerance(double tolerance) {
+	        m_tolerance = tolerance;
+	    }
+
+	    /**
+	     * Return true if the error is within the percentage of the total input range,
+	     * determined by setTolerance. This asssumes that the maximum and minimum input
+	     * were set using setInput.
+	     * @return true if the error is less than the tolerance
+	     */
+	    public boolean onTarget() {
+	        return (Math.abs(m_error) > m_tolerance);
+	    }
+
+	    /**
+	     * Begin running the PIDController
+	     */
+	    public void enable() {
+	        m_enabled = true;
+	    }
+
+	    /**
+	     * Stop running the PIDController, this sets the output to zero before stopping.
+
+	     */
+	    public void disable() {
+	        m_enabled = false;
+	    }
+
+	    /**
+	     * Reset the previous error,, the integral term, and disable the controller.
+	     */
+	    public void reset() {
+	        disable();
+	        m_prevError = 0;
+	        m_totalError = 0;
+	        m_result = 0;
+	    }
+
+	}
